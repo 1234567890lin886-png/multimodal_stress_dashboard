@@ -1,0 +1,62 @@
+{
+  "accuracy": 0.7111111111111111,
+  "classification_report": {
+    "Relaxed": {
+      "precision": 0.5666666666666667,
+      "recall": 0.5666666666666667,
+      "f1-score": 0.5666666666666667,
+      "support": 30.0
+    },
+    "Stress": {
+      "precision": 0.7833333333333333,
+      "recall": 0.7833333333333333,
+      "f1-score": 0.7833333333333333,
+      "support": 60.0
+    },
+    "accuracy": 0.7111111111111111,
+    "macro avg": {
+      "precision": 0.675,
+      "recall": 0.675,
+      "f1-score": 0.675,
+      "support": 90.0
+    },
+    "weighted avg": {
+      "precision": 0.7111111111111111,
+      "recall": 0.7111111111111111,
+      "f1-score": 0.7111111111111111,
+      "support": 90.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      17,
+      13
+    ],
+    [
+      13,
+      47
+    ]
+  ],
+  "mean_physio_gate": 0.502052366733551,
+  "mean_emotion_gate": 0.497947633266449,
+  "train_subjects": [
+    "s19",
+    "s20",
+    "s13",
+    "s56",
+    "s15",
+    "s18",
+    "s51",
+    "s53",
+    "s14",
+    "s17"
+  ],
+  "test_subjects": [
+    "s11",
+    "s12",
+    "s16",
+    "s55",
+    "s54",
+    "s52"
+  ]
+}

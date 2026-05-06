@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.streamlit/
+outputs/*.json
+outputs/*.csv
+outputs/*.log
+!outputs/.gitkeep
+sample_data/.emotion_cache_*.json
+sample_data/*_test.csv
+sessions.db
+*.mp4
+*.avi
+*.mov
+*.mkv

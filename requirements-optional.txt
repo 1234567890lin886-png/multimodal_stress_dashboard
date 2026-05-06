@@ -1,0 +1,5 @@
+# Optional emotion backend. The app runs without it and falls back to neutral context.
+deepface>=0.0.79
+
+# Needed for train_gated_fusion.py.
+tensorflow>=2.15
