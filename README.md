@@ -158,27 +158,6 @@ XGBoost Early Fusion
 Random Forest Baseline
 ```
 
-## Video-rPPG Training Plan
-
-The video path now uses the same ROI idea as the original FYP pipeline: MediaPipe FaceMesh selects cheek/optional forehead skin regions, a skin mask removes non-skin pixels, and POS/CHROM converts the ROI RGB sequence into an rPPG pulse signal. If FaceMesh is unavailable or the face is not detected, the code falls back to the older center ROI so the dashboard still runs.
-
-The next training path moves from sensor-BVP training features to video-rPPG training features so that training matches dashboard inference. See:
-
-```text
-VIDEO_RPPG_TRAINING_CHANGES.md
-```
-
-Current caveat: `s51_to_s56` is a small six-subject subset. A subject-level split is intentionally stricter than a random row split, so accuracy can look modest. That is acceptable for an honest portfolio project; report it as a real-data baseline, not a finished clinical model.
-
-## Accuracy Roadmap
-
-Highest-priority improvements:
-
-- Train the main XGBoost model on video-rPPG features, not sensor-BVP features, to remove the current train/inference domain gap.
-- Add quality-aware sample filtering: drop windows with high rPPG-vs-BVP HR error, low SNR, unstable lighting, or high motion.
-- Use late fusion as a comparison: train one model on rPPG features, one model on FER semantics, then learn a small meta-classifier over their probabilities.
-- Try subject adaptation features such as per-subject baseline HR, HR delta, HRV delta, and signal-quality delta.
-- If more data/GPU is available, compare feature models against deep rPPG models such as DeepPhys, PhysNet, TS-CAN, or EfficientPhys.
 
 ## Project Structure
 
@@ -218,10 +197,5 @@ multimodal_stress_dashboard/
 
 The app is for wellness and technical demonstration only. It is not a medical diagnostic tool.
 
-## Notes
 
-For a one-week portfolio build, this version prioritizes a clean end-to-end workflow over heavy model training. A good next step is to train a small fusion classifier on extracted features and compare it against the rule-based baseline included here.
 
-## FYP Inspiration Boundary
-
-The implementation borrows the idea of an rPPG plus semantic fusion pipeline from the FYP, but this repository is a separate portfolio project. It does not import, overwrite, or require files from `semantic_evm_stress_monitor`.
