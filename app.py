@@ -11,7 +11,7 @@ import streamlit as st
 from src.analyzer import AnalysisReport, analyze_synthetic, analyze_video
 
 
-st.set_page_config(page_title="Multimodal Stress Dashboard", layout="wide")
+st.set_page_config(page_title="OpenCV rPPG Live Vitals", layout="wide")
 
 
 def available_models() -> dict[str, str | None]:
@@ -32,12 +32,13 @@ def available_models() -> dict[str, str | None]:
 def render_metric_cards(report: AnalysisReport) -> None:
     features = report.features
     decision = report.decision
-    cols = st.columns(5)
+    cols = st.columns(6)
     cols[0].metric("Stress Label", decision.label)
     cols[1].metric("HR", "N/A" if features.hr_bpm is None else f"{features.hr_bpm:.1f} BPM")
     cols[2].metric("Baseline", "N/A" if features.baseline_hr is None else f"{features.baseline_hr:.1f} BPM")
     cols[3].metric("Signal Quality", f"{features.signal_quality:.2f}")
     cols[4].metric("Confidence", f"{decision.confidence:.2f}")
+    cols[5].metric("FPS", f"{report.fps:.1f}")
 
 
 def render_report(report: AnalysisReport) -> None:
@@ -102,8 +103,8 @@ def render_report(report: AnalysisReport) -> None:
     st.download_button("Download JSON Report", payload, file_name="stress_report.json", mime="application/json")
 
 
-st.title("Multimodal Stress Monitoring Dashboard")
-st.caption("rPPG + HRV proxy + optional FER + uncertainty-aware semantic fusion")
+st.title("OpenCV rPPG Live Vitals Dashboard")
+st.caption("Camera-based HR, stress, emotion, and signal-quality monitoring with deployable ML models")
 
 with st.sidebar:
     st.header("Input")
@@ -111,7 +112,7 @@ with st.sidebar:
     model_options = available_models()
     selected_model = st.selectbox("Model", list(model_options.keys()))
     model_path = model_options[selected_model]
-    max_frames = st.slider("Max frames", min_value=120, max_value=1800, value=900, step=60)
+    max_frames = st.slider("Max frames", min_value=120, max_value=2400, value=1200, step=60)
     stride = st.slider("Frame stride", min_value=1, max_value=10, value=6)
     run = st.button("Analyze", type="primary")
 
@@ -121,6 +122,7 @@ if mode == "Synthetic demo":
         with st.spinner("Analyzing synthetic session..."):
             render_report(analyze_synthetic(model_path=model_path))
 elif mode == "Upload video":
+    st.info("For large local AVI files, use Local video path instead of browser upload.")
     uploaded = st.file_uploader("Upload a short face video", type=["mp4", "avi", "mov", "mkv"])
     if uploaded is not None and run:
         suffix = Path(uploaded.name).suffix or ".mp4"

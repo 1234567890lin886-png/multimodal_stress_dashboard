@@ -1,227 +1,253 @@
-# Multimodal Stress Monitoring Dashboard
+# OpenCV rPPG Live Vitals Dashboard
 
-Privacy-preserving stress and emotion monitoring demo inspired by a final-year project on semantic EVM, rPPG, and facial expression recognition. This repository is intentionally standalone: it does not import or modify the original FYP codebase.
+OpenCV-based webcam and video dashboard for camera-only vital-sign monitoring.
 
-## What It Does
+The project turns ordinary face video into:
 
-- Accepts a video file or a synthetic demo signal.
-- Extracts camera-based rPPG features with FaceMesh cheek ROI, skin-mask refinement, and POS/CHROM RGB projection.
-- Estimates HR, HRV proxy, signal quality, motion and lighting stability.
-- Adds optional facial emotion context when DeepFace is installed.
-- Produces an uncertainty-aware stress label.
-- Shows a Streamlit dashboard with time-series plots, feature cards, rationales, and a downloadable JSON report.
+```text
+heart rate
+HRV proxy
+stress prediction
+facial emotion context
+signal quality
+motion / lighting robustness indicators
+```
 
-## Why This Project Fits AI Roles
+It is designed as a deployable dashboard rather than paper-only code: local video paths, large AVI support, pre-trained lightweight models, Streamlit reports, and an OpenCV live webcam mode are included.
 
-This project demonstrates:
+## What It Is
 
-- Multimodal AI signal fusion
-- rPPG and lightweight physiological feature extraction
-- Explainable decision logic
-- Uncertainty-aware classification
-- Privacy-preserving edge-style processing
-- A usable dashboard rather than a notebook-only prototype
+```text
+Computer Vision + Signal Processing + Machine Learning + Multimodal Fusion
+```
+
+- **Computer Vision:** FaceMesh cheek ROI, skin-mask refinement, frame quality monitoring.
+- **Signal Processing:** POS/CHROM rPPG, FFT HR estimation, HRV proxy, SNR.
+- **Machine Learning:** XGBoost, Random Forest baseline, Gated Fusion MLP.
+- **Multimodal Fusion:** rPPG physiology + FER emotion semantics.
+
+## Product Features
+
+- Streamlit dashboard for synthetic demos, uploaded videos, and local video paths.
+- OpenCV webcam live mode for real-time HR/stress overlays.
+- Local-path analysis for large `.avi` files without browser upload failures.
+- Online quality gate that uses only video-available features.
+- Optional DeepFace FER for facial emotion context.
+- Pre-trained XGBoost and Gated Fusion models included.
+- Reproducible UBFC-Phys import, alignment, and ablation scripts.
 
 ## Quick Start
 
-```bash
-cd multimodal_stress_dashboard
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-streamlit run app.py
+```powershell
+Set-Location D:\project\multimodal_stress_dashboard
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\Scripts\streamlit.exe" run app.py
 ```
 
-If you do not have a test video, use the built-in synthetic demo in the sidebar.
-
-Optional facial emotion recognition:
-
-```bash
-pip install -r requirements-optional.txt
-```
-
-Without the optional dependency, the dashboard still runs and uses neutral facial context.
-
-## CLI Demo
-
-```bash
-python run_demo.py --synthetic --out outputs/sample_report.json
-```
-
-Analyze a video:
-
-```bash
-python run_demo.py --video path/to/video.mp4 --out outputs/video_report.json
-```
-
-## Train The Lightweight Classifier
-
-Train a Random Forest classifier on synthetic physiological and emotion features:
-
-```bash
-python train_classifier.py
-```
-
-This creates:
+Open:
 
 ```text
-models/stress_rf.joblib
-sample_data/training_features.csv
+http://localhost:8501
 ```
 
-Once the model file exists, both the dashboard and CLI use it for the final stress label while still showing the rule-based baseline for transparency.
-
-## Train From UBFC-Phys
-
-If you have UBFC-Phys subject folders with `bvp_*`, `eda_*`, and task files:
-
-```bash
-python import_ubfc_phys.py --dataset-root H:\s51_to_s56 --out sample_data/ubfc_phys_s51_s56_features.csv
-python train_classifier.py --data-in sample_data/ubfc_phys_s51_s56_features.csv
-```
-
-The importer uses BVP and EDA files to create window-level features. Labels are derived from the UBFC-Phys task protocol:
-
-- `T1` -> `Relaxed`
-- `T2` -> `Mild Stress`
-- `T3` -> `Elevated Physiological Stress`
-
-This gives the project a real physiological dataset path while keeping the video-based rPPG dashboard separate.
-
-To train a true multimodal semantic fusion model, extract facial emotion semantics from the UBFC-Phys videos and merge them with BVP/EDA features:
-
-```bash
-python extract_video_emotion_features.py --dataset-root H:\s51_to_s56 --out sample_data/ubfc_phys_emotion_features.csv --frames-per-window 1
-python build_multimodal_dataset.py --physio sample_data/ubfc_phys_s51_s56_features.csv --emotion sample_data/ubfc_phys_emotion_features.csv --out sample_data/ubfc_phys_multimodal_features.csv
-python train_classifier.py --data-in sample_data/ubfc_phys_multimodal_features.csv --feature-set multimodal
-```
-
-This trains the classifier on both physiological features and FER semantic probabilities.
-
-For higher cross-subject accuracy on the small `s51-s56` subset, train a binary model:
-
-```bash
-python train_classifier.py --data-in sample_data/ubfc_phys_multimodal_features.csv --feature-set multimodal --label-mode binary
-```
-
-Binary mode maps `T1` to `Relaxed` and `T2/T3` to `Stress`. This is often more reliable than forcing `Mild Stress` vs `Elevated Physiological Stress` on a six-subject subset.
-
-Multiple UBFC-Phys folders can be passed at once:
-
-```bash
-python import_ubfc_phys.py --dataset-root H:\s11_to_s20 H:\s51_to_s56 --out sample_data/ubfc_phys_all_features.csv
-python extract_video_emotion_features.py --dataset-root H:\s11_to_s20 H:\s51_to_s56 --out sample_data/ubfc_phys_all_emotion_features.csv --frames-per-window 5
-```
-
-Current 16-subject binary multimodal model:
+Recommended dashboard settings:
 
 ```text
-training data: H:\s11_to_s20 + H:\s51_to_s56
-windows: 240
-model: XGBoost
-FER frames per window: 3 for the current saved XGBoost model; 5 is recommended for the next full retraining run.
-quality gate: training-reference mode, kept 240/240 rows
-subject-level accuracy: 0.76
+Input: Local video path
+Model: XGBoost Online Gate
+Frame stride: 6
+Max frames: 900-1200
 ```
 
-## Adaptive Semantic Fusion
+For large UBFC `.avi` files, use `Local video path` instead of uploading through the browser.
 
-The project also includes a Gated Fusion MLP:
-
-```bash
-python train_gated_fusion.py --data-in sample_data/ubfc_phys_s11_s20_s51_s56_multimodal_features_f3.csv
-```
-
-This model encodes physiological features and facial emotion semantics separately, then learns sample-level modality weights before final classification:
+Example:
 
 ```text
-physio features -> physio encoder
-emotion features -> emotion encoder
-both embeddings -> learned gate -> fused representation -> classifier
+H:\s51_to_s56\s54\vid_s54_T2.avi
 ```
 
-Current subject-level result:
+## OpenCV Webcam Live Mode
+
+Run the real-time OpenCV overlay:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" live_webcam.py --source 0
+```
+
+Enable facial emotion recognition during live mode:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" live_webcam.py --source 0 --enable-fer
+```
+
+Use a video file as the source:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" live_webcam.py --source "H:\s51_to_s56\s54\vid_s54_T2.avi"
+```
+
+Press `q` to quit.
+
+Live mode displays:
 
 ```text
-Gated Fusion MLP accuracy: 0.71
-XGBoost early-fusion baseline: 0.76
+HR
+stress label
+confidence
+emotion
+signal quality
+SNR
+motion score
+lighting score
+FPS
 ```
 
-The Gated Fusion MLP is kept for adaptive semantic fusion and explainability because it outputs physiological vs facial-emotion weights for each prediction. XGBoost remains the stronger performance baseline on the current small dataset.
+## CLI Video Analysis
 
-The dashboard sidebar lets you choose between:
+Synthetic demo:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" run_demo.py --synthetic --model models\stress_xgb_video_rppg_online_qg.joblib --out outputs\online_xgb_demo.json
+```
+
+Analyze a local video:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" run_demo.py --video "H:\s51_to_s56\s54\vid_s54_T2.avi" --model models\stress_xgb_video_rppg_online_qg.joblib --out outputs\video_report.json --stride 6 --max-frames 1200
+```
+
+## Current Models
+
+Recommended deployment-style model:
 
 ```text
-Auto
-Gated Fusion MLP
-XGBoost Early Fusion
-Random Forest Baseline
+models/stress_xgb_video_rppg_online_qg.joblib
 ```
 
-## Video-rPPG Training Plan
-
-The video path now uses the same ROI idea as the original FYP pipeline: MediaPipe FaceMesh selects cheek/optional forehead skin regions, a skin mask removes non-skin pixels, and POS/CHROM converts the ROI RGB sequence into an rPPG pulse signal. If FaceMesh is unavailable or the face is not detected, the code falls back to the older center ROI so the dashboard still runs.
-
-The next training path moves from sensor-BVP training features to video-rPPG training features so that training matches dashboard inference. See:
+Why this model:
 
 ```text
-VIDEO_RPPG_TRAINING_CHANGES.md
+Uses online quality gate only
+Does not use BVP ground truth for filtering
+Uses aligned 5-frame FER semantics
+Works with webcam/video-only inference
 ```
 
-Current caveat: `s51_to_s56` is a small six-subject subset. A subject-level split is intentionally stricter than a random row split, so accuracy can look modest. That is acceptable for an honest portfolio project; report it as a real-data baseline, not a finished clinical model.
+Other models:
 
-## Accuracy Roadmap
+```text
+models/stress_xgb_video_rppg.joblib        # BVP-reference-gated experiment
+models/gated_fusion_mlp.joblib             # adaptive modality weights
+models/stress_rf.joblib                    # baseline
+models/ablation_xgb_multimodal.joblib      # ablation model
+```
 
-Highest-priority improvements:
+## Evaluation Snapshot
 
-- Train the main XGBoost model on video-rPPG features, not sensor-BVP features, to remove the current train/inference domain gap.
-- Add quality-aware sample filtering: drop windows with high rPPG-vs-BVP HR error, low SNR, unstable lighting, or high motion.
-- Use late fusion as a comparison: train one model on rPPG features, one model on FER semantics, then learn a small meta-classifier over their probabilities.
-- Try subject adaptation features such as per-subject baseline HR, HR delta, HRV delta, and signal-quality delta.
-- If more data/GPU is available, compare feature models against deep rPPG models such as DeepPhys, PhysNet, TS-CAN, or EfficientPhys.
+Online-gate setting, no BVP ground-truth filtering:
+
+```text
+Training data: H:\s11_to_s20 + H:\s51_to_s56
+External test: H:\s1_to_s10
+FER coverage: 100%
+External XGBoost accuracy: 0.8267
+```
+
+Online-gate ablation:
+
+```text
+rPPG-only external accuracy: 0.820
+FER-only external accuracy: 0.687
+Multimodal external accuracy: 0.867
+```
+
+Reports:
+
+```text
+models/ONLINE_GATE_EXPERIMENT.md
+models/ABLATION_EXPERIMENT_F5_ALIGNED_ONLINE_QG.md
+SIGNAL_ALIGNMENT.md
+```
+
+## Training And Experiments
+
+Extract video-rPPG features with online gate:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" import_ubfc_phys_video_rppg.py --dataset-root H:\s11_to_s20 H:\s51_to_s56 --out sample_data\ubfc_phys_video_rppg_features_online_qg.csv --window-sec 60 --step-sec 30 --video-stride 6 --label-policy task-binary --quality-gate fyp --no-bvp-reference
+```
+
+Extract 5-frame FER semantics:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" extract_video_emotion_features.py --dataset-root H:\s11_to_s20 H:\s51_to_s56 --out sample_data\ubfc_phys_s11_s20_s51_s56_emotion_features_f5.csv --frames-per-window 5
+```
+
+Merge with window-index alignment:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" build_multimodal_dataset.py --physio sample_data\ubfc_phys_video_rppg_features_online_qg.csv --emotion sample_data\ubfc_phys_s11_s20_s51_s56_emotion_features_f5.csv --out sample_data\ubfc_phys_video_rppg_multimodal_features_f5_aligned_online_qg.csv --alignment window-index --step-sec 30
+```
+
+Train XGBoost:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" train_classifier.py --data-in sample_data\ubfc_phys_video_rppg_multimodal_features_f5_aligned_online_qg.csv --feature-set multimodal --label-mode binary --model-type xgboost --quality-gate fyp --model-out models\stress_xgb_video_rppg_online_qg.joblib
+```
+
+Run ablation:
+
+```powershell
+& "D:\vs\SharedcomponentsTtoolSdk\Python39_64\python.exe" run_ablation_experiment.py --train-data sample_data\ubfc_phys_video_rppg_multimodal_features_f5_aligned_online_qg.csv --external-data sample_data\ubfc_phys_s1_s10_video_rppg_multimodal_features_f5_aligned_online_qg.csv --out-csv outputs\ablation_f5_aligned_online_qg_results.csv --out-md models\ABLATION_EXPERIMENT_F5_ALIGNED_ONLINE_QG.md
+```
+
+## Edge AI Direction
+
+This project is intentionally lightweight:
+
+```text
+OpenCV
+MediaPipe FaceMesh
+POS/CHROM rPPG
+XGBoost
+optional DeepFace FER
+```
+
+That makes it suitable for edge-device experiments:
+
+```text
+Raspberry Pi
+QuecPi
+Jetson Nano
+USB webcam
+SBC camera
+mobile camera stream
+```
+
+For edge deployment, use the OpenCV live mode first and disable FER if CPU is limited:
+
+```powershell
+python live_webcam.py --source 0
+```
 
 ## Project Structure
 
 ```text
-multimodal_stress_dashboard/
-  app.py
-  run_demo.py
-  train_classifier.py
-  import_ubfc_phys.py
-  extract_video_emotion_features.py
-  build_multimodal_dataset.py
-  models/
-    stress_rf.joblib
-  requirements.txt
-  src/
-    analyzer.py
-    emotion.py
-    features.py
-    fusion.py
-    rppg.py
-    synthetic.py
-    video.py
-  sample_data/
-    synthetic_session.csv
-  outputs/
-    .gitkeep
+app.py                          # Streamlit dashboard
+live_webcam.py                  # OpenCV webcam live mode
+run_demo.py                     # CLI video/synthetic analysis
+src/video.py                    # FaceMesh ROI and RGB signal extraction
+src/rppg.py                     # POS/CHROM rPPG and HR estimation
+src/ml_model.py                 # XGBoost / Gated MLP prediction
+src/quality_gate.py             # online and reference quality gates
+import_ubfc_phys_video_rppg.py  # video-rPPG dataset importer
+extract_video_emotion_features.py
+build_multimodal_dataset.py
+run_ablation_experiment.py
+models/
+sample_data/
 ```
 
-## Output Labels
+## Safety Notice
 
-- `Relaxed`
-- `Mostly Calm`
-- `Mild Stress`
-- `Elevated Physiological Stress`
-- `Uncertain`
-- `Poor Signal Quality`
-
-The app is for wellness and technical demonstration only. It is not a medical diagnostic tool.
-
-## Notes
-
-For a one-week portfolio build, this version prioritizes a clean end-to-end workflow over heavy model training. A good next step is to train a small fusion classifier on extracted features and compare it against the rule-based baseline included here.
-
-## FYP Inspiration Boundary
-
-The implementation borrows the idea of an rPPG plus semantic fusion pipeline from the FYP, but this repository is a separate portfolio project. It does not import, overwrite, or require files from `semantic_evm_stress_monitor`.
+This is a wellness and technical demonstration system. It is not a medical device and must not be used for diagnosis, treatment, or emergency monitoring.
